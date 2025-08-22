@@ -32,11 +32,11 @@ def main():
         os.path.join("..", "hwp_server", "hwplib", "target", "hwplib-1.1.10.jar"),
         os.path.join("..", "hwp_server", "hwpxlib", "target", "hwpxlib-1.0.5.jar")
     ])
-    java_files = [f for f in os.listdir(os.path.join(root, "convertorCLI")) if f.endswith(".java")]
+    java_files = [f for f in os.listdir(os.path.join(root, "converterCLI")) if f.endswith(".java")]
     for java_file in java_files:
         run_command([
             "javac", "-cp", classpath, java_file
-        ], cwd=os.path.join(root, "convertorCLI"))
+        ], cwd=os.path.join(root, "converterCLI"))
 
     print("✅ 전체 빌드 완료!")
 
