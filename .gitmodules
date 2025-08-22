@@ -1,0 +1,8 @@
+[submodule "converterCLI"]
+	path = converterCLI
+	url = https://github.com/qazcdek/hwp_converter_cli.git
+	branch = main
+[submodule "hwp_server"]
+	path = hwp_server
+	url = https://github.com/qazcdek/hwp_server.git
+	branch = main
