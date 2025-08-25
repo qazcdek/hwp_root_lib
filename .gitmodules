@@ -6,3 +6,4 @@
 	path = hwp_server
 	url = https://github.com/qazcdek/hwp_server.git
 	branch = main
+	ignore = all
