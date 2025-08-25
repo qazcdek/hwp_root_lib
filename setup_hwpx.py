@@ -20,6 +20,9 @@ def find_cli_dir():
     for name in ("converterCLI", "convertorCLI"):
         p = os.path.join(ROOT, name)
         if os.path.isdir(p):
+            print("cli 찾음")
+            print(p)
+            print("cli 찾음")
             return p
     raise FileNotFoundError("converterCLI 또는 convertorCLI 디렉터리를 찾을 수 없습니다.")
 
@@ -61,8 +64,9 @@ def ensure_cli_compiled(cli_dir):
     if "HwpxConverterCLI.java" not in java_files:
         raise FileNotFoundError(f"{cli_dir} 에 HwpxConverterCLI.java가 없습니다.")
 
-    run(["javac", "-encoding", "UTF-8", "-d", "build", "-cp", cp] + java_files, cwd=cli_dir)
+    run(["javac", "-encoding", "UTF-8", "-cp", cp] + java_files, cwd=cli_dir)
     if not os.path.isfile(main_class_file):
+        print(main_class_file)
         raise RuntimeError("컴파일은 성공했지만 HwpxConverterCLI.class를 찾지 못했습니다.")
     return cli_dir
 
