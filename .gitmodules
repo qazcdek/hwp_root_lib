@@ -7,3 +7,15 @@
 	url = https://github.com/qazcdek/hwp_server.git
 	branch = main
 	ignore = all
+[submodule "java/hwp_root"]
+	branch = main
+[submodule "java/hwp_root/converterCLI"]
+	branch = main
+[submodule "java/hwp_root/hwp_server"]
+	branch = main
+[submodule "java/hwp_root/hwp_server/hwplib"]
+	branch = main
+[submodule "java/hwp_root/hwp_server/hwpxlib"]
+	branch = main
+[submodule "java/hwp_root/hwp_server/hwp2hwpx"]
+	branch = main
