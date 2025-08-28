@@ -5,6 +5,7 @@ import glob
 import sys
 import orjson
 from typing import List
+from java.hwp_root import java_logger as logger
 
 ROOT = os.path.abspath(os.path.dirname(__file__))
 
@@ -72,7 +73,7 @@ def convert_hwp_to_text(hwp_path: str | List[str]) -> str:
     else:
         hwp_path_list = hwp_path
     
-    total_result = []
+    total_result = {}
 
     for hwp_path in hwp_path_list:
         if not os.path.exists(hwp_path):
@@ -102,17 +103,22 @@ def convert_hwp_to_text(hwp_path: str | List[str]) -> str:
             print(proc.stderr, end="")
 
         try:
-            total_result.append(orjson.loads(proc.stdout))
+            java_output_dict = orjson.loads(proc.stdout)
+            total_result.update(java_output_dict)
         except FileNotFoundError as e:
             print(f"❌ 파일 시스템 오류 (오류 발생 파일을 건너뜁니다): {hwp_path}", file=sys.stderr)
             print(e, file=sys.stderr)
             continue # 다음 파일로 이동
+        except Exception as e:
+            # Catch any other unexpected errors
+            logger.error(f"오류 내용: {e}")
+            logger.error(f"{proc.stdout}")
         
     return total_result
 
 # 사용 예시
 if __name__ == "__main__":
-    hwp_file = r"/data/qazcde/kiat/storage/hwp_dir/real_01.hwp"
+    hwp_file = r"/data/qazcde/kiat/storage/hwp_dir/산업기술혁신사업 관련 법령 및 규정-3교.hwp"
     try:
         converted_text = convert_hwp_to_text(hwp_file)
         # print(type(converted_text)) # dict

@@ -22,7 +22,7 @@ root/
 └── setup_hwpx.py
 ```
 
-# 설치해야 되는 부가 라이브러리
+# 설치해야 되는 부가 라이브러리 (순서에 맞춰서 설치)
 1. hwplib<br>
 - https://github.com/qazcdek/hwplibjdk<br>
 버전 1.8 이상에 맞게 수정
