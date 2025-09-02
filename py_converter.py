@@ -72,7 +72,7 @@ def convert_hwp_to_text(hwp_path: str | List[str]) -> str:
     else:
         hwp_path_list = hwp_path
     
-    total_result = []
+    total_result = {}
 
     for hwp_path in hwp_path_list:
         if not os.path.exists(hwp_path):
@@ -97,21 +97,12 @@ def convert_hwp_to_text(hwp_path: str | List[str]) -> str:
             print("stderr:\n" + proc.stderr)
             raise RuntimeError(f"Java returned {proc.returncode}")
 
-        # STDERR에는 푸터 페이지번호 메타 로그가 있을 수 있으니 참고용으로 찍어도 됨
-        if proc.stderr:
-            print(proc.stderr, end="")
-
-        # [수정] orjson으로 파싱하기 전에, Java의 원본 출력물을 확인합니다.
-        print("--- Java stdout (raw output) ---")
-        print(proc.stdout)
-        print("---------------------------------")
-
         try:
+            java_output_dict = orjson.loads(proc.stdout)
+            total_result.update(java_output_dict)
+        except FileNotFoundError as e:
+            print(f"❌ 파일 시스템 오류 (오류 발생 파일을 건너뜁니다): {hwp_path}", file=sys.stderr)
             total_result.append(proc.stdout)
-        except Exception as e: # FileNotFoundError에서 더 일반적인 Exception으로 변경
-            print(f"❌ JSON 파싱 오류 또는 파일 시스템 오류 (오류 발생 파일을 건너뜁니다): {hwp_path}", file=sys.stderr)
-            print(e, file=sys.stderr)
-            continue # 다음 파일로 이동
         
     return total_result
 
@@ -121,8 +112,7 @@ if __name__ == "__main__":
     try:
         converted_text = convert_hwp_to_text(hwp_file)
         # print(type(converted_text)) # dict
-        print(converted_text)
-        print(len(converted_text))
+        print("success")
     except Exception as e:
         print("에러:", e)
         sys.exit(1)
