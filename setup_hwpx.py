@@ -3,6 +3,7 @@ import os
 import platform
 import glob
 import sys
+from typing import List
 
 ROOT = os.path.abspath(os.path.dirname(__file__))
 
@@ -39,12 +40,14 @@ def pick_one(patterns):
     with_deps = [p for p in cands if "with-dependencies" in os.path.basename(p)]
     return with_deps[0] if with_deps else max(cands, key=os.path.getmtime)
 
-def ensure_cli_compiled(cli_dir):
+def ensure_cli_compiled(cli_dir, force_recompile=False):
     main_class_file = os.path.join(cli_dir, "HwpxConverterCLI.class")
-    if os.path.isfile(main_class_file):
-        return cli_dir  # 이미 컴파일됨
+    
+    # force_recompile 플래그가 False이고 클래스 파일이 존재하면 재컴파일 건너뛰기
+    if os.path.isfile(main_class_file) and not force_recompile:
+        return cli_dir
 
-    # JAR 경로 탐색
+    # JAR 경로 탐색 (컴파일에 필요)
     hwp2hwpx_jar = pick_one([
         os.path.join(ROOT, "hwp_server", "hwp2hwpx", "target", "*.jar")
     ])
@@ -59,7 +62,6 @@ def ensure_cli_compiled(cli_dir):
     os.makedirs(cli_dir, exist_ok=True)
     cp = sep().join([hwp2hwpx_jar, hwplib_jar, hwpxlib_jar, "."])
 
-    # 소스 파일들
     java_files = [f for f in os.listdir(cli_dir) if f.endswith(".java")]
     if "HwpxConverterCLI.java" not in java_files:
         raise FileNotFoundError(f"{cli_dir} 에 HwpxConverterCLI.java가 없습니다.")
@@ -70,12 +72,36 @@ def ensure_cli_compiled(cli_dir):
         raise RuntimeError("컴파일은 성공했지만 HwpxConverterCLI.class를 찾지 못했습니다.")
     return cli_dir
 
+def reinstall_java_dependencies():
+    """
+    Maven 라이브러리와 자바 CLI를 순서대로 재설치합니다.
+    """
+    print("🚀 Java 의존성 재설치를 시작합니다...")
+
+    # 1. hwplib 재설치
+    hwplib_path = os.path.join(ROOT, "hwp_server", "hwplib")
+    run(["mvn", "clean", "install", "-DskipTests"], cwd=hwplib_path)
+
+    # 2. hwpxlib 재설치
+    hwpxlib_path = os.path.join(ROOT, "hwp_server", "hwpxlib")
+    run(["mvn", "clean", "install", "-DskipTests"], cwd=hwpxlib_path)
+
+    # 3. hwp2hwpx 재설치
+    hwp2hwpx_path = os.path.join(ROOT, "hwp_server", "hwp2hwpx")
+    run(["mvn", "clean", "install", "-DskipTests"], cwd=hwp2hwpx_path)
+
+    # 4. HwpxConverterCLI 재컴파일
+    cli_dir = find_cli_dir()
+    ensure_cli_compiled(cli_dir, force_recompile=True)
+    print("✅ 모든 Java 의존성 및 CLI 재설치 완료.")
+
+
 def convert_hwp_to_text(hwp_path: str) -> str:
     """
     Java 기반 HwpxConverterCLI를 호출하여 .hwp/.hwpx를 JSON 텍스트로 변환
     """
     cli_dir = find_cli_dir()
-    build_dir = ensure_cli_compiled(cli_dir)
+    build_dir = ensure_cli_compiled(cli_dir) # 재설치 시 force=True 옵션이 없으므로, 이미 컴파일된 CLI를 사용
 
     # JAR 경로
     hwp2hwpx_jar = pick_one([os.path.join(ROOT, "hwp_server", "hwp2hwpx", "target", "*.jar")])
@@ -95,11 +121,14 @@ def convert_hwp_to_text(hwp_path: str) -> str:
     return r.stdout
 
 if __name__ == "__main__":
-    # 사용 예시
-    hwp_file = "/data/qazcde/kiat/storage/hwp_dir/real_01.hwp"
-    try:
-        out = convert_hwp_to_text(hwp_file)
-        print(out)
-    except Exception as e:
-        print("에러:", e)
-        sys.exit(1)
+    if len(sys.argv) > 1 and sys.argv[1] == 'reinstall':
+        reinstall_java_dependencies()
+    else:
+        # 사용 예시
+        hwp_file = "/data/qazcde/kiat/storage/hwp_dir/real_01.hwp"
+        try:
+            out = convert_hwp_to_text(hwp_file)
+            print(out)
+        except Exception as e:
+            print("에러:", e)
+            sys.exit(1)
