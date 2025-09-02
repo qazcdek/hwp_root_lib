@@ -5,7 +5,6 @@ import glob
 import sys
 import orjson
 from typing import List
-from java.hwp_root import java_logger as logger
 
 ROOT = os.path.abspath(os.path.dirname(__file__))
 
@@ -73,7 +72,7 @@ def convert_hwp_to_text(hwp_path: str | List[str]) -> str:
     else:
         hwp_path_list = hwp_path
     
-    total_result = {}
+    total_result = []
 
     for hwp_path in hwp_path_list:
         if not os.path.exists(hwp_path):
@@ -102,17 +101,17 @@ def convert_hwp_to_text(hwp_path: str | List[str]) -> str:
         if proc.stderr:
             print(proc.stderr, end="")
 
+        # [수정] orjson으로 파싱하기 전에, Java의 원본 출력물을 확인합니다.
+        print("--- Java stdout (raw output) ---")
+        print(proc.stdout)
+        print("---------------------------------")
+
         try:
-            java_output_dict = orjson.loads(proc.stdout)
-            total_result.update(java_output_dict)
-        except FileNotFoundError as e:
-            print(f"❌ 파일 시스템 오류 (오류 발생 파일을 건너뜁니다): {hwp_path}", file=sys.stderr)
+            total_result.append(proc.stdout)
+        except Exception as e: # FileNotFoundError에서 더 일반적인 Exception으로 변경
+            print(f"❌ JSON 파싱 오류 또는 파일 시스템 오류 (오류 발생 파일을 건너뜁니다): {hwp_path}", file=sys.stderr)
             print(e, file=sys.stderr)
             continue # 다음 파일로 이동
-        except Exception as e:
-            # Catch any other unexpected errors
-            logger.error(f"오류 내용: {e}")
-            logger.error(f"{proc.stdout}")
         
     return total_result
 
@@ -123,6 +122,7 @@ if __name__ == "__main__":
         converted_text = convert_hwp_to_text(hwp_file)
         # print(type(converted_text)) # dict
         print(converted_text)
+        print(len(converted_text))
     except Exception as e:
         print("에러:", e)
         sys.exit(1)
